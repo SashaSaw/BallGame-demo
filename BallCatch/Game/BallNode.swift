@@ -117,18 +117,13 @@ final class BallNode: SKShapeNode {
         let normalizedHeight = 4.0 * p * (1.0 - p)   // 0→1→0 parabolic
 
         let D: CGFloat = 1.5
-        let scaleMultiplier: CGFloat = 1.0             // how much of D the ball "travels"
         // Ball comes toward viewer → gets bigger
-        let ballScale = D / max(0.1, D - normalizedHeight * scaleMultiplier)
+        let ballScale = D / max(0.1, D - normalizedHeight * 1.0)
         // Subtle fade at peak to sell depth
-        let alpha = 0.7 + 0.3 * (1.0 - normalizedHeight)
+        let fadeAlpha = 0.7 + 0.3 * (1.0 - normalizedHeight)
 
         setScale(ballScale)
-        alpha(alpha)
-    }
-
-    private func alpha(_ value: CGFloat) {
-        self.alpha = value
+        self.alpha = fadeAlpha
     }
 }
 

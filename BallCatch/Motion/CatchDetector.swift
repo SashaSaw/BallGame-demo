@@ -1,40 +1,40 @@
 import CoreMotion
 import Foundation
 
-/// Detects a catch gesture: downward z-acceleration snap while phone is near level.
+/// Detects a catch gesture: downward z-acceleration snap while catch window is open.
 final class CatchDetector {
-    let catchThreshold: Double = -0.8       // g (downward)
-    let levelAngleLimit: Double = 30.0      // degrees from level
+    var catchThreshold: Double = -0.6       // g (downward) — slightly easier than -0.8
 
     var onCatchDetected: (() -> Void)?
-    var isWindowOpen: Bool = false           // set by GameStateManager
+    var isWindowOpen: Bool = false
 
-    // Pre-trigger: fire haptic 8ms before expected catch
     var onPreTrigger: (() -> Void)?
     private var preTriggerFired = false
+    private var catchFired = false          // only fire once per window
 
     func process(motion: CMDeviceMotion) {
         guard isWindowOpen else {
             preTriggerFired = false
+            catchFired = false
             return
         }
 
         let z = motion.userAcceleration.z
-        let pitch = motion.attitude.pitch * (180 / Double.pi)
-        let phoneLevel = abs(pitch) < levelAngleLimit
 
-        // Pre-trigger 8ms early is handled externally via timing;
-        // here we fire haptic on first eligible frame
-        if z < catchThreshold && phoneLevel {
-            if !preTriggerFired {
-                preTriggerFired = true
-                onPreTrigger?()
-            }
+        // Pre-trigger haptic on first eligible frame
+        if z < catchThreshold && !preTriggerFired {
+            preTriggerFired = true
+            onPreTrigger?()
+        }
+
+        if z < catchThreshold && !catchFired {
+            catchFired = true
             onCatchDetected?()
         }
     }
 
     func reset() {
         preTriggerFired = false
+        catchFired = false
     }
 }
