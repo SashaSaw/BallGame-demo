@@ -7,6 +7,7 @@ final class BallScene: SKScene, SKPhysicsContactDelegate {
     // MARK: - Nodes
     private var ball: BallNode!
     private var walls: [SKNode] = []
+    private var platformNode: SKShapeNode?
 
     // MARK: - External references
     private let motionManager = MotionManager.shared
@@ -36,6 +37,7 @@ final class BallScene: SKScene, SKPhysicsContactDelegate {
         setupWalls()
         ball = BallNode(in: self)
         addChild(ball)
+        setupPlatform()
 
         setupDetectors()
         motionManager.start()
@@ -67,6 +69,22 @@ final class BallScene: SKScene, SKPhysicsContactDelegate {
             addChild(node)
             walls.append(node)
         }
+    }
+
+    private func setupPlatform() {
+        // A subtle rounded-rect representing the phone screen surface
+        let w = size.width * 0.55
+        let h = size.height * 0.28
+        let rect = CGRect(x: -w/2, y: -h/2, width: w, height: h)
+        let node = SKShapeNode(rect: rect, cornerRadius: 22)
+        node.strokeColor = UIColor.white.withAlphaComponent(0.18)
+        node.fillColor   = UIColor.white.withAlphaComponent(0.04)
+        node.lineWidth   = 1.5
+        node.position    = CGPoint(x: size.width / 2, y: size.height / 2)
+        node.zPosition   = 5
+        node.alpha        = 0
+        addChild(node)
+        platformNode = node
     }
 
     private func setupDetectors() {
@@ -126,12 +144,28 @@ final class BallScene: SKScene, SKPhysicsContactDelegate {
         let dt = lastUpdateTime == 0 ? 0 : currentTime - lastUpdateTime
         lastUpdateTime = currentTime
 
-        guard !isAirborne else { return }
+        if isAirborne {
+            // Drive perspective scaling every frame during flight
+            let progress = gameState.airborneProgress
+            ball.updateAirborneScale(progress: progress)
+
+            // Platform: fades in, shrinks away as ball rises, returns on landing
+            let p = CGFloat(progress)
+            let normalizedHeight = 4.0 * p * (1.0 - p)  // 0→1→0
+            let D: CGFloat = 1.5
+            let platformScale = D / (D + normalizedHeight * 1.0)  // recedes
+            platformNode?.setScale(platformScale)
+            platformNode?.alpha = CGFloat(0.6 + 0.4 * (1.0 - normalizedHeight))
+            return
+        }
+
+        // Hide platform when rolling
+        platformNode?.alpha = 0
 
         // Apply gravity from device motion
         let gx = motionManager.gravityX
         let gy = motionManager.gravityY
-        let scale: CGFloat = 300.0
+        let scale: CGFloat = 120.0   // reduced from 300 — gentler rolling
         physicsWorld.gravity = CGVector(dx: CGFloat(gx) * scale, dy: CGFloat(gy) * scale)
 
         // Update stats
@@ -168,10 +202,11 @@ final class BallScene: SKScene, SKPhysicsContactDelegate {
         walls.removeAll()
         setupWalls()
         // If the scene was resized from zero (layout pass after first present),
-        // reposition the ball to centre — it was spawned at (0,0) otherwise.
+        // reposition the ball and platform to centre.
         if let ball, (oldSize.width < 10 || ball.position == .zero) {
             ball.position = CGPoint(x: size.width / 2, y: size.height / 2)
             ball.physicsBody?.velocity = .zero
         }
+        platformNode?.position = CGPoint(x: size.width / 2, y: size.height / 2)
     }
 }

@@ -100,15 +100,35 @@ final class BallNode: SKShapeNode {
     // MARK: - Airborne appearance
 
     func setAirborne(_ airborne: Bool) {
-        if airborne {
-            let shrink = SKAction.scale(to: 0.3, duration: 0.3)
-            let fade = SKAction.fadeAlpha(to: 0.6, duration: 0.3)
-            run(SKAction.group([shrink, fade]))
-        } else {
-            let grow = SKAction.scale(to: 1.0, duration: 0.2)
-            let unfade = SKAction.fadeAlpha(to: 1.0, duration: 0.2)
-            run(SKAction.group([grow, unfade]))
+        removeAction(forKey: "airborneRestore")
+        if !airborne {
+            // Return to normal — short snap back
+            let grow = SKAction.scale(to: 1.0, duration: 0.15)
+            let unfade = SKAction.fadeAlpha(to: 1.0, duration: 0.15)
+            run(SKAction.group([grow, unfade]), withKey: "airborneRestore")
         }
+    }
+
+    /// Call every frame during flight. progress 0→1 over full arc.
+    /// Uses perspective projection: ball comes "out of" the screen toward viewer.
+    /// D = focal distance (1.5). Height follows parabola: h = 4p(1-p).
+    func updateAirborneScale(progress: Double) {
+        let p = CGFloat(progress)
+        let normalizedHeight = 4.0 * p * (1.0 - p)   // 0→1→0 parabolic
+
+        let D: CGFloat = 1.5
+        let scaleMultiplier: CGFloat = 1.0             // how much of D the ball "travels"
+        // Ball comes toward viewer → gets bigger
+        let ballScale = D / max(0.1, D - normalizedHeight * scaleMultiplier)
+        // Subtle fade at peak to sell depth
+        let alpha = 0.7 + 0.3 * (1.0 - normalizedHeight)
+
+        setScale(ballScale)
+        alpha(alpha)
+    }
+
+    private func alpha(_ value: CGFloat) {
+        self.alpha = value
     }
 }
 

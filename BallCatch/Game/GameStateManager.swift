@@ -56,7 +56,7 @@ final class GameStateManager {
     }
 
     func beginFlight(velocity: Double) {
-        let scaledGravity = 15.0
+        let scaledGravity = 5.0   // ~half earth gravity (4.9 m/s²) — slower arc
         let flightTime = 2.0 * velocity / scaledGravity
         lastThrowVelocity = velocity
         lastFlightTime = flightTime
