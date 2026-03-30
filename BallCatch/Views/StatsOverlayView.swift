@@ -6,6 +6,7 @@ struct StatsOverlayView: View {
     let throwDetector: ThrowDetectorStats
     let ballVelocity: CGVector
     let ballPosition: CGPoint
+    var refreshTick: Int = 0  // incremented by timer in GameView to force redraws
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {

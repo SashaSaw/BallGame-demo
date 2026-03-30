@@ -8,6 +8,8 @@ struct GameView: View {
 
     @State private var scene: BallScene?
     @State private var throwStats = ThrowDetectorStats()
+    // Timer drives stats overlay redraws — BallScene is not @Observable
+    @State private var statsRefreshTick: Int = 0
 
     // Desaturation while airborne
     private var saturation: Double { gameState.state == .airborne ? 0.3 : 1.0 }
@@ -42,12 +44,17 @@ struct GameView: View {
                 gameState: gameState,
                 throwDetector: throwStats,
                 ballVelocity: scene?.ballVelocity ?? .zero,
-                ballPosition: scene?.ballPosition ?? .zero
+                ballPosition: scene?.ballPosition ?? .zero,
+                refreshTick: statsRefreshTick
             )
             .allowsHitTesting(false)
         }
         .background(Color(white: 0.08))
         .onAppear { setupScene() }
+        // Refresh stats overlay at ~30fps
+        .onReceive(Timer.publish(every: 1/30, on: .main, in: .common).autoconnect()) { _ in
+            statsRefreshTick &+= 1
+        }
     }
 
     private func setupScene() {
@@ -67,7 +74,11 @@ struct SpriteKitView: UIViewRepresentable {
     let scene: SKScene
 
     func makeUIView(context: Context) -> SKView {
-        let view = SKView()
+        // Give the SKView a real frame upfront so the scene has correct
+        // dimensions when didMove(to:) fires — without this the scene size
+        // is zero and the ball spawns at (0,0).
+        let frame = CGRect(origin: .zero, size: UIScreen.main.bounds.size)
+        let view = SKView(frame: frame)
         view.ignoresSiblingOrder = true
         view.showsFPS = false
         view.showsNodeCount = false

@@ -167,5 +167,11 @@ final class BallScene: SKScene, SKPhysicsContactDelegate {
         walls.forEach { $0.removeFromParent() }
         walls.removeAll()
         setupWalls()
+        // If the scene was resized from zero (layout pass after first present),
+        // reposition the ball to centre — it was spawned at (0,0) otherwise.
+        if let ball, (oldSize.width < 10 || ball.position == .zero) {
+            ball.position = CGPoint(x: size.width / 2, y: size.height / 2)
+            ball.physicsBody?.velocity = .zero
+        }
     }
 }
