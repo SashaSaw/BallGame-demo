@@ -1,0 +1,48 @@
+name: BallCatch
+options:
+  bundleIdPrefix: com.sasha
+  deploymentTarget:
+    iOS: "17.0"
+  defaultConfig: Debug
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    TARGETED_DEVICE_FAMILY: "1"   # iPhone only
+    ENABLE_BITCODE: NO
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+
+targets:
+  BallCatch:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BallCatch
+        excludes:
+          - "Resources/Info.plist"
+    resources:
+      - path: BallCatch/Resources
+    info:
+      path: BallCatch/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: BallCatch
+        CFBundleIdentifier: com.sasha.ballcatch
+        NSMotionUsageDescription: "BallCatch uses motion sensors to roll and catch the virtual ball based on how you move your iPhone."
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UILaunchScreen: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sasha.ballcatch
+        INFOPLIST_FILE: BallCatch/Resources/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+    dependencies:
+      - sdk: SpriteKit.framework
+      - sdk: CoreMotion.framework
+      - sdk: CoreHaptics.framework
